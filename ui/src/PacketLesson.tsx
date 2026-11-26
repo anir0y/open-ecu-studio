@@ -1,24 +1,27 @@
 import { useRef, useState } from "react";
 import { ControlSlot, useControlWindow } from "./ControlWindow";
+import { findDbcMessage, type DbcMessage } from "./dbc";
 import { downloadCsv } from "./download-csv";
-import { decodePacket, examples, frameNames, spacedHex, worksheetCsv, type Packet } from "./packets";
+import { decodePacket, examples, frameName, spacedHex, worksheetCsv, type Packet } from "./packets";
 
-type Props = { packet: Packet; latest?: Packet; onSelect: (packet: Packet) => void };
+type Props = { packet: Packet; latest?: Packet; customMessages?: DbcMessage[]; onSelect: (packet: Packet) => void };
 
-export function PacketLesson({ packet, latest, onSelect }: Props) {
+export function PacketLesson({ packet, latest, customMessages = [], onSelect }: Props) {
   const {detached} = useControlWindow();
   const panel = useRef<HTMLElement>(null);
-  const {fields, note} = decodePacket(packet);
+  const customMessage = findDbcMessage(customMessages, packet);
+  const {fields, note} = decodePacket(packet, customMessage);
   const [focusName, setFocusName] = useState("Road-wheel steering");
   const focus = fields.find(field => field.name === focusName) ?? fields[0];
   const example = examples.find(item => item === packet);
-  const origin = example ? `Worked example · ${example.title}` : `Captured frame #${packet.sequence}`;
+  const origin = example ? `Worked example · ${example.title}` : customMessage && packet.sequence === undefined
+    ? "DBC preview" : `Captured frame #${packet.sequence}`;
   function showPacket(selected: Packet) {
     onSelect(selected);
     if (detached) panel.current?.scrollIntoView({block: "start"});
   }
   function download(owner: Document) {
-    downloadCsv(`worksheet-${packet.id}-${packet.sequence ?? example?.title.replaceAll(" ", "-")}.csv`, worksheetCsv(packet, origin), owner);
+    downloadCsv(`worksheet-${packet.id}-${packet.sequence ?? example?.title.replaceAll(" ", "-") ?? customMessage?.name}.csv`, worksheetCsv(packet, origin, customMessage), owner);
   }
   return <section ref={panel} className="packet-lesson" id="packet-lesson" aria-label="Packet classroom">
     <div className="lesson-tools">
@@ -44,7 +47,7 @@ export function PacketLesson({ packet, latest, onSelect }: Props) {
         </div>
       </ControlSlot>
     </div>
-    <p className="lesson-origin">{origin} · {packet.id} · {frameNames[packet.id] ?? "Unknown identifier"} · {packet.is_fd ? "CAN FD" : "Classical CAN"} · {packet.data.length / 2} bytes</p>
+    <p className="lesson-origin">{origin} · {packet.id} · {frameName(packet.id, customMessages)} · {packet.is_fd ? "CAN FD" : "Classical CAN"} · {packet.data.length / 2} bytes</p>
     <div className="byte-strip" aria-label="Indexed payload bytes">{spacedHex(packet.data).split(" ").map((hex, i) =>
       <span key={i} className={focus && i >= focus.start && i <= focus.end ? "selected" : ""}><small>B{i}</small><code>{hex}</code></span>
     )}</div>

@@ -2,16 +2,22 @@
   "name": "open-ecu-research-console",
   "private": true,
   "version": "0.4.1",
+  "description": "A software-only automotive ECU and CAN research classroom.",
+  "author": "Animesh Roy",
   "type": "module",
   "scripts": {
     "build": "tsc --noEmit && vite build",
     "check": "tsc --noEmit",
     "test:motion": "node --experimental-strip-types --test tests/motion.test.ts",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "test:worker": "node --experimental-strip-types --test worker/*.test.ts",
     "electron:compile": "tsc -p electron/tsconfig.json",
     "desktop:prepare": "pnpm build && pnpm electron:compile",
     "desktop:dev": "pnpm desktop:prepare && electron electron-dist/main.cjs",
-    "desktop:package": "pnpm desktop:prepare && ../scripts/build_desktop_backend.sh && electron-builder --mac dir --arm64"
+    "desktop:package": "pnpm desktop:prepare && ../scripts/build_desktop_backend.sh && electron-builder --mac dmg --arm64",
+    "worker:check": "pnpm build && wrangler deploy --dry-run --outdir ../work/wrangler-dry-run",
+    "worker:dev": "pnpm build && wrangler dev",
+    "worker:deploy": "pnpm build && wrangler deploy"
   },
   "main": "electron-dist/main.cjs",
   "dependencies": {
@@ -32,11 +38,13 @@
     "electron": "45.5.0",
     "electron-builder": "26.18.0",
     "typescript": "7.0.2",
-    "vite": "8.3.8"
+    "vite": "8.3.8",
+    "wrangler": "4.168.0"
   },
   "build": {
     "appId": "dev.openecu.researchconsole",
     "productName": "Open ECU Studio",
+    "copyright": "Copyright © 2026 Animesh Roy",
     "asar": true,
     "directories": {
       "output": "../outputs/desktop"
@@ -57,8 +65,28 @@
     ],
     "mac": {
       "category": "public.app-category.developer-tools",
-      "target": ["dir"],
+      "icon": "build/icon.icns",
+      "target": [
+        "dmg"
+      ],
       "artifactName": "Open-ECU-Studio-${version}-${arch}.${ext}"
+    },
+    "dmg": {
+      "title": "Open ECU Studio ${version}",
+      "backgroundColor": "#080b0e",
+      "contents": [
+        {
+          "x": 145,
+          "y": 220,
+          "type": "file"
+        },
+        {
+          "x": 425,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
     }
   }
 }

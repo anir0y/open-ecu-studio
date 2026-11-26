@@ -1,10 +1,16 @@
 import type { Exercise, ExerciseAction, ExerciseCar } from "./receiver-exercise";
+import { decodeDbcMessage, type DbcMessage } from "./dbc.ts";
 
 export const frameNames: Record<string, string> = {
   "0x181": "Wheel speeds", "0x182": "ESC dynamics", "0x183": "Vehicle state",
   "0x280": "ECU status", "0x510": "FD telemetry", "0x6A0": "UDS request", "0x6A8": "UDS response",
   "0x361": "Body controller", "0x362": "Fob receiver decision",
 };
+
+export function frameName(id: string, customMessages: DbcMessage[] = []) {
+  const numericId = Number.parseInt(id.replace(/^0x/i, ""), 16);
+  return frameNames[id] ?? customMessages.find(message => message.id === numericId)?.name ?? "Unknown";
+}
 
 export type Packet = {
   id: string; data: string; is_fd: boolean; is_extended_id?: boolean;
@@ -60,11 +66,13 @@ const services: Record<string, string> = {
   "22": "Read data by identifier", "62": "Read data response", "7F": "Negative response",
 };
 
-export function decodePacket(packet: Packet): { fields: Field[]; note: string } {
+export function decodePacket(packet: Packet, customMessage?: DbcMessage): { fields: Field[]; note: string } {
   const hex = packet.data.toUpperCase();
   const fields: Field[] = [];
   if (!/^(?:[0-9A-F]{2})+$/.test(hex)) return {fields, note: "Invalid or empty hex payload."};
-  if (!frameNames[packet.id] || packet.is_extended_id) return {fields, note: "No field map for this identifier."};
+  if (packet.is_extended_id) return {fields, note: "No field map for this identifier."};
+  if (customMessage && !packet.is_fd) return decodeDbcMessage(customMessage, hex);
+  if (!frameNames[packet.id]) return {fields, note: "No field map for this identifier."};
   const length = hex.length / 2;
   if (length !== (packet.id === "0x510" ? 16 : 8) || packet.is_fd !== (packet.id === "0x510")) {
     return {fields, note: "Frame format or payload length differs from the lab definition."};
@@ -137,9 +145,9 @@ export function decodePacket(packet: Packet): { fields: Field[]; note: string } 
 
 export function spacedHex(hex: string) { return hex.match(/.{1,2}/g)?.join(" ") ?? ""; }
 
-export function worksheetCsv(packet: Packet, origin: string) {
+export function worksheetCsv(packet: Packet, origin: string, customMessage?: DbcMessage) {
   const header = ["source","sequence","timestamp_unix_s","can_id","format","payload_hex","byte_start","byte_end","field","field_hex","decoding","value","unit"];
-  const rows = decodePacket(packet).fields.map(f => [origin,packet.sequence ?? "",packet.timestamp ?? "",packet.id,packet.is_fd ? "CAN FD" : "CAN",spacedHex(packet.data),f.start,f.end,f.name,f.hex,f.rule,f.result,f.unit]);
+  const rows = decodePacket(packet, customMessage).fields.map(f => [origin,packet.sequence ?? "",packet.timestamp ?? "",packet.id,packet.is_fd ? "CAN FD" : "CAN",spacedHex(packet.data),f.start,f.end,f.name,f.hex,f.rule,f.result,f.unit]);
   return csvRows([header, ...rows]);
 }
 

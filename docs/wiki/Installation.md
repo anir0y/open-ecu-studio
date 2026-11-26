@@ -20,6 +20,20 @@ Open the local console. When **Lab connected** appears, select **Dynamics model*
 
 To start it another day, run the last command again. If the browser reports that the UI is missing, run the frontend build command and restart the server. If the port is busy, choose another port with `--port` and use that port in the browser.
 
+### Cloudflare Worker deployment
+
+The hosted classroom is available at [ecu-studio.anir0y.in](https://ecu-studio.anir0y.in). It runs the synthetic dynamics lab in an isolated Durable Object session for each browser profile.
+
+With Wrangler authenticated to the intended Cloudflare account, build and deploy from the repository root:
+
+```sh
+pnpm --dir ui install --frozen-lockfile
+pnpm --dir ui test:worker
+pnpm --dir ui worker:deploy
+```
+
+The custom hostname is declared in `ui/wrangler.jsonc`. No D1 database or deployment secret is required. The hosted version deliberately disables STM32 firmware rehosting; use the local browser or desktop setup for Unicorn or Renode experiments.
+
 ### STM32 reference image
 
 The **STM32 reference ECU** option loads `firmware/reference_ecu/build/reference_ecu.elf`. If the image is missing, or you have edited its C source, install GNU Make and the GNU Arm embedded toolchain (including `arm-none-eabi-gcc`). Compile the image with the project Makefile.
@@ -32,14 +46,16 @@ The browser and desktop apps run this image in Unicorn when using the in-memory 
 
 ## Apple Silicon desktop app
 
-After installing the tools above and running `pnpm --dir ui install --frozen-lockfile`, build and open the app.
+After installing the tools above and running `pnpm --dir ui install --frozen-lockfile`, build the signed-as-available Apple Silicon disk image and open the packaged app.
 
 ```sh
 pnpm --dir ui desktop:package
 open "outputs/desktop/mac-arm64/Open ECU Studio.app"
 ```
 
-The package includes the frontend, Python backend and reference image. Launching the app starts its own local server. It opens on the second display when one is connected and uses the primary display otherwise. Choose **Detach controls** for the two-window layout.
+The distributable disk image is written to `outputs/desktop/Open-ECU-Studio-<version>-arm64.dmg`. The package includes the frontend, Python backend, reference firmware and the Open ECU Studio application icon. Launching the app starts its own local server. It opens on the second display when one is connected and uses the primary display otherwise. Choose **Detach controls** for the two-window layout.
+
+The local build is ad-hoc signed when no Apple Developer identity is configured. Gatekeeper may require a control-click and **Open** on another Mac. A public release should be Developer ID signed and notarized.
 
 ## Docker command-line demo
 

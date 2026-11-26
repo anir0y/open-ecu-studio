@@ -17,4 +17,5 @@ ui/*.tsbuildinfo
 ui/vite.config.js
 ui/vite.config.d.ts
 ui/electron-dist/
+ui/.wrangler/
 dist/

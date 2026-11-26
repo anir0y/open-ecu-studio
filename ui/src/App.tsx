@@ -5,11 +5,13 @@ import { VehicleScene } from "./VehicleScene";
 import { BodyControls, IndicatorSwitch, type BodyAction, type BodyState } from "./BodyControls";
 import { ReceiverComparison } from "./ReceiverComparison";
 import { PacketLesson } from "./PacketLesson";
+import { DbcWorkspace } from "./DbcWorkspace";
 import { AuthorView } from "./AuthorView";
 import { EscEventPanel } from "./EscEventPanel";
 import { ControlSlot, useControlWindow, type ControlGroup } from "./ControlWindow";
 import type { EscCapture, EscCaptureAction } from "./packets";
-import { examples, frameNames, spacedHex, type Packet } from "./packets";
+import { loadDbcCatalog, type DbcMessage } from "./dbc";
+import { examples, frameName, frameNames, spacedHex, type Packet } from "./packets";
 
 type Source = "synthetic" | "firmware";
 
@@ -66,6 +68,7 @@ type VehicleInputs = {
 type Status = {
   interface: string;
   channel: string;
+  capabilities?: { firmware: boolean };
   source: Source | "idle";
   running: boolean;
   firmware_running: boolean;
@@ -85,7 +88,7 @@ type WsPayload = { frames: Frame[]; status: Status };
 
 const workspaceLinks = [
   ["drive-lab", "Drive lab"], ["esc-event", "Freeze ESC event"], ["body-controls", "Body controls"],
-  ["signals", "Signals"], ["diagnostics", "Diagnostics"], ["packet-lesson", "Packet classroom"], ["author", "Author"],
+  ["signals", "Signals"], ["diagnostics", "Diagnostics"], ["dbc-workspace", "DBC workbench"], ["packet-lesson", "Packet classroom"], ["author", "Author"],
 ] as const;
 
 const initialInputs: VehicleInputs = {
@@ -137,10 +140,22 @@ const diagnostics = [
   ["esc_state", "ESC state", "22 F1 A1"],
 ] as const;
 
+const browserSession = (() => {
+  const key = "open-ecu-cloud-session-v1";
+  const saved = localStorage.getItem(key);
+  if (saved) return saved;
+  const created = crypto.randomUUID();
+  localStorage.setItem(key, created);
+  return created;
+})();
+
 async function api<T>(path: string, body?: object): Promise<T> {
   const response = await fetch(path, {
     method: body ? "POST" : "GET",
-    headers: body ? { "Content-Type": "application/json" } : undefined,
+    headers: {
+      "X-ECU-Session": browserSession,
+      ...(body ? {"Content-Type": "application/json"} : {}),
+    },
     body: body ? JSON.stringify(body) : undefined,
   });
   const payload = await response.json();
@@ -182,7 +197,7 @@ function RangeControl({
   );
 }
 
-function SignalTimeline({ frames }: { frames: Frame[] }) {
+function SignalTimeline({ frames, customMessages }: { frames: Frame[]; customMessages: DbcMessage[] }) {
   const display = frames.slice(-54);
   return (
     <div className="signal-track" aria-label="Live CAN traffic">
@@ -193,7 +208,7 @@ function SignalTimeline({ frames }: { frames: Frame[] }) {
             key={frame.sequence}
             className={`${frame.direction} ${frame.is_fd ? "fd" : ""}`}
             style={{ left: `${(index / Math.max(1, display.length - 1)) * 100}%` }}
-            title={`${frame.id} ${frameNames[frame.id] ?? "Unknown"} ${frame.data}`}
+            title={`${frame.id} ${frameName(frame.id, customMessages)} ${frame.data}`}
           />
         ))}
       </div>
@@ -225,6 +240,7 @@ export default function App() {
   const [inputs, setInputs] = useState<VehicleInputs>(initialInputs);
   const [frames, setFrames] = useState<Frame[]>([]);
   const [lesson, setLesson] = useState<Packet>(examples[0]);
+  const [dbcCatalog, setDbcCatalog] = useState(loadDbcCatalog);
   const pendingInputs = useRef(false);
   const changeInputs: typeof setInputs = (value) => {
     pendingInputs.current = true;
@@ -240,21 +256,26 @@ export default function App() {
   useEffect(() => {
     let active = true;
     let socket: WebSocket | undefined;
+    let cloudTimer: number | undefined;
+    let cloudPending = false;
+    const applyPayload = (payload: WsPayload, firstStatus = false) => {
+      if (!active) return;
+      if (firstStatus && payload.status.running) {
+        setSource(payload.status.source === "firmware" ? "firmware" : "synthetic");
+        if (!pendingInputs.current) setInputs(payload.status.vehicle_inputs);
+      }
+      setStatus(payload.status);
+      if (payload.frames.length) setFrames((current) => [...current, ...payload.frames].slice(-360));
+    };
     const connect = () => {
       let firstStatus = true;
       const protocol = location.protocol === "https:" ? "wss" : "ws";
-      socket = new WebSocket(`${protocol}://${location.host}/ws`);
+      socket = new WebSocket(`${protocol}://${location.host}/ws?session=${encodeURIComponent(browserSession)}`);
       socket.onopen = () => active && setConnected(true);
       socket.onmessage = (event) => {
-        if (!active) return;
         const payload = JSON.parse(event.data) as WsPayload;
-        if (firstStatus && payload.status.running) {
-          setSource(payload.status.source === "firmware" ? "firmware" : "synthetic");
-          if (!pendingInputs.current) setInputs(payload.status.vehicle_inputs);
-        }
+        applyPayload(payload, firstStatus);
         firstStatus = false;
-        setStatus(payload.status);
-        if (payload.frames.length) setFrames((current) => [...current, ...payload.frames].slice(-360));
       };
       socket.onerror = () => socket?.close();
       socket.onclose = () => {
@@ -263,11 +284,27 @@ export default function App() {
         reconnectTimer.current = window.setTimeout(connect, 1000);
       };
     };
-    api<Status>("/api/status").then(setStatus).catch((cause: Error) => setError(cause.message));
-    connect();
+    api<Status>("/api/status").then(initial => {
+      applyPayload({frames: [], status: initial}, true);
+      if (initial.interface !== "cloudflare") {
+        connect();
+        return;
+      }
+      setConnected(true);
+      cloudTimer = window.setInterval(async () => {
+        if (cloudPending) return;
+        cloudPending = true;
+        try { applyPayload(await api<WsPayload>("/api/tick")); }
+        catch (cause) {
+          setConnected(false);
+          setError(cause instanceof Error ? cause.message : "Cloud classroom disconnected");
+        } finally { cloudPending = false; }
+      }, 100);
+    }).catch((cause: Error) => setError(cause.message));
     return () => {
       active = false;
       window.clearTimeout(reconnectTimer.current);
+      window.clearInterval(cloudTimer);
       socket?.close();
     };
   }, []);
@@ -406,7 +443,8 @@ export default function App() {
     faultActive: status.running && (firmwareMode ? status.decoded.intervention_active : status.fault_active),
   };
   const recentFrames = useMemo(() => [...frames].reverse().slice(0, 14), [frames]);
-  const bodyAvailable = source === "synthetic" && status.source !== "firmware" && status.interface === "virtual";
+  const firmwareAvailable = status.capabilities?.firmware ?? true;
+  const bodyAvailable = source === "synthetic" && status.source !== "firmware" && ["virtual", "cloudflare"].includes(status.interface);
   const latestPacket = status.body_frames?.[lesson.id] ?? frames[frames.map(frame => frame.id).lastIndexOf(lesson.id)];
   const runBodyAction = async (action: BodyAction) => {
     const result = await api<Status>("/api/body", {action});
@@ -472,7 +510,7 @@ export default function App() {
             <div className="deck-heading"><span>{firmwareMode ? "Firmware station" : "Driver station"}</span><strong>{firmwareMode ? "Observe the reference ECU" : "Control the model"}</strong></div>
             <div className="source-picker" role="group" aria-label="Execution source">
               <button className={!firmwareMode ? "selected" : ""} aria-pressed={!firmwareMode} onClick={() => setSource("synthetic")} disabled={status.running || busy}><strong>Dynamics model</strong><small>Live controls and CAN-FD</small></button>
-              <button className={firmwareMode ? "selected" : ""} aria-pressed={firmwareMode} onClick={() => setSource("firmware")} disabled={status.running || busy}><strong>STM32 reference ECU</strong><small>{status.interface === "socketcan" ? "Renode · Linux vcan" : "Cortex-M4 · virtual CAN"}</small></button>
+              <button className={firmwareMode ? "selected" : ""} aria-pressed={firmwareMode} onClick={() => setSource("firmware")} disabled={status.running || busy || !firmwareAvailable}><strong>STM32 reference ECU</strong><small>{!firmwareAvailable ? "Desktop and local app only" : status.interface === "socketcan" ? "Renode · Linux vcan" : "Cortex-M4 · virtual CAN"}</small></button>
             </div>
             <button className={`primary-run ${status.running ? "stop" : ""}`} onClick={runAction} disabled={busy}><i />{status.running ? "Stop simulation" : "Start simulation"}</button>
 
@@ -518,7 +556,7 @@ export default function App() {
         <section className="signals-workspace" id="signals">
           <div className="signals-main">
             <div className="section-heading"><span><strong>Signal rail</strong><small>{status.frame_count.toLocaleString()} frames observed</small></span><div className="source-address">{status.interface} / {status.channel}</div></div>
-            <SignalTimeline frames={frames} />
+            <SignalTimeline frames={frames} customMessages={dbcCatalog?.messages ?? []} />
             <div className="wheel-strip">
               {visualState.wheelSpeeds.map((speed, index) => <div key={index} className={index === 2 && visualState.faultActive ? "fault" : ""}><span>{["Front left", "Front right", "Rear left", "Rear right"][index]}</span><strong>{speed.toFixed(2)}</strong><small>km/h</small></div>)}
             </div>
@@ -535,7 +573,8 @@ export default function App() {
           </aside>
         </section>
 
-        <PacketLesson packet={lesson} latest={latestPacket} onSelect={setLesson} />
+        <DbcWorkspace catalog={dbcCatalog} onCatalogChange={setDbcCatalog} onInspect={setLesson} />
+        <PacketLesson packet={lesson} latest={latestPacket} customMessages={dbcCatalog?.messages} onSelect={setLesson} />
         <section className="frame-workspace">
           <div className="section-heading"><span><strong>Network analyzer</strong><small>Newest frames first</small></span><ControlSlot group="analysis"><a className="export-trace" href={`${location.origin}/api/trace`} download="open-ecu-trace.json">Export JSON trace</a></ControlSlot></div>
           <div className="frame-table" role="table" aria-label="Recent CAN frames">
@@ -543,14 +582,14 @@ export default function App() {
             {recentFrames.length === 0 ? <div className="empty-log">Start the simulation to populate the analyzer.</div> : recentFrames.map(frame =>
               <div className={`frame-row ${frame.direction}`} role="row" key={frame.sequence}>
                 <a href="#packet-lesson" aria-label={`Inspect frame ${frame.sequence}, ${frame.id}`} onClick={() => setLesson(frame)}>{frame.id}</a>
-                <span>{frameNames[frame.id] ?? "Unknown"}</span><code>{spacedHex(frame.data)}</code>
+                <span>{frameName(frame.id, dbcCatalog?.messages)}</span><code>{spacedHex(frame.data)}</code>
                 <small>{frame.is_fd ? "CAN-FD" : frame.direction === "bus" ? "CAN 2.0" : "ISO-TP"}</small>
               </div>)}
           </div>
         </section>
       </main>
 
-      <footer className="studio-footer"><span>Software-only network · invented identifiers · no physical vehicle connection</span><span>{Object.keys(frameNames).sort().join(" / ")}</span></footer>
+      <footer className="studio-footer"><span>Software-only network · invented identifiers · no physical vehicle connection</span><span>{[...Object.keys(frameNames), ...(dbcCatalog?.messages.map(message => message.idHex) ?? [])].sort().join(" / ")}</span></footer>
     </div>
   );
 }

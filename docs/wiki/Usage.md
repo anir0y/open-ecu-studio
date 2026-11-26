@@ -29,7 +29,17 @@ Select **Inspect** below the `0x361` body status packet to open that observation
 4. Read the three packet cards side by side. `0x181` contains the four wheel speeds, `0x182` contains brake pressure, and `0x280` reports ESC intervention. Compare each card's frame number and time offset from slip. If a report was missing, the worksheet marks it as missing.
 5. Choose **Download event worksheet (CSV)** before **Return to live** or **Arm for next slip**. To capture another onset, choose **Cruise**, wait for the wheel speeds to recover, arm the capture, then choose **Split grip** again.
 
-For a firmware-led run, choose **Stop simulation**, select **STM32 reference ECU**, arm the capture, then choose **Start simulation**. Watch for the firmware's rear-left wheel to drop from 40 to 30 km/h and brake pressure to reach 60 bar. In **Diagnostics**, choose **Software version** to see the request and response bytes. Stop the run before switching back to the dynamics model.
+For a firmware-led run in the desktop or local browser app, choose **Stop simulation**, select **STM32 reference ECU**, arm the capture, then choose **Start simulation**. Watch for the firmware's rear-left wheel to drop from 40 to 30 km/h and brake pressure to reach 60 bar. In **Diagnostics**, choose **Software version** to see the request and response bytes. Stop the run before switching back to the dynamics model. The hosted Cloudflare classroom labels this option **Desktop and local app only**.
+
+## Import and inspect a DBC definition
+
+1. Open **DBC workbench** and choose **Load teaching example**, or choose **Import DBC file** for a local `.dbc` file. The definition is validated before it is saved in this browser profile. To create one without DBC syntax, open **Build a message visually**.
+2. In the visual builder, enter a standard CAN identifier, message name and payload length. Add signals and place each one at a start byte. The payload bench highlights assigned bytes in cyan and collisions in orange. Choose **Create and save message** only after every signal fits.
+3. Select a message and change its physical signal values. **Packet preview** shows the encoded payload byte by byte. You can edit that payload to see how the same definition decodes different raw values.
+4. Choose **Inspect in classroom** to highlight the signal bytes and decoding rule in **Packet classroom**. **Download worksheet** exports the current message, payload, byte order, raw calculation, value, and unit.
+5. Refresh the page to confirm the validated definition returns. **Clear local DBC** removes only that imported definition; it does not alter the built-in lab protocol.
+
+The current teaching subset accepts standard 11-bit identifiers, 1–8 byte Classical CAN messages, and byte-aligned 8, 16, 24, or 32-bit integer signals. Intel and Motorola byte order, signedness, factor, offset, range, and unit are supported. Extended identifiers, CAN FD DBC messages, bit-packed signals, multiplexing, overlapping signals, and built-in lab identifiers are rejected rather than partially decoded. The workbench only creates local previews; it does not connect to or transmit through CAN hardware.
 
 ## Use a separate controls window
 
@@ -41,4 +51,4 @@ The desktop app opens on Screen 2 when a second display is connected. **Show con
 
 Use **Export JSON trace** in **Network analyzer** for the backend's most recent 3,000 frames. Stopping the simulation retains that trace. Download it before closing the backend, and use the event worksheet to keep a particular wheel-slip observation.
 
-The receiver exercise can be resumed after a refresh in the same browser profile at the same address. On desktop, reopen the same app profile. **Reset exercise** starts a fresh receiver worksheet. If the header shows **Reconnecting**, wait for **Lab connected** before sending another control change. In the web version, check that the local studio server is still running if that message persists.
+The receiver exercise can be resumed after a refresh in the same browser profile at the same address. On desktop, reopen the same app profile. **Reset exercise** starts a fresh receiver worksheet. If the header shows **Reconnecting**, wait for **Lab connected** before sending another control change. In the local web version, check that the studio server is still running if that message persists.

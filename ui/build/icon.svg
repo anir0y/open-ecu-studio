@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="shell" x1="128" y1="64" x2="896" y2="960" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#172630"/>
+      <stop offset="0.55" stop-color="#0b1217"/>
+      <stop offset="1" stop-color="#05080a"/>
+    </linearGradient>
+    <linearGradient id="amber" x1="250" y1="230" x2="580" y2="720" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffd36a"/>
+      <stop offset="0.52" stop-color="#e8b84a"/>
+      <stop offset="1" stop-color="#a96f16"/>
+    </linearGradient>
+    <linearGradient id="cyan" x1="280" y1="710" x2="790" y2="710" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3fa9b9"/>
+      <stop offset="0.55" stop-color="#78e7f3"/>
+      <stop offset="1" stop-color="#3fa9b9"/>
+    </linearGradient>
+    <clipPath id="shellClip"><rect x="56" y="56" width="912" height="912" rx="210"/></clipPath>
+  </defs>
+
+  <rect x="66" y="78" width="892" height="892" rx="205" fill="#000000" opacity="0.38"/>
+  <rect x="56" y="56" width="912" height="912" rx="210" fill="url(#shell)"/>
+  <g clip-path="url(#shellClip)">
+    <path d="M56 770C264 688 472 704 968 530V968H56Z" fill="#101c23" opacity="0.72"/>
+    <g opacity="0.12" stroke="#66d9e8" stroke-width="2">
+      <path d="M88 290H936M88 512H936M88 734H936"/>
+      <path d="M290 88V936M512 88V936M734 88V936"/>
+    </g>
+    <path d="M171 779C357 697 533 716 866 590" fill="none" stroke="#22343d" stroke-width="116" stroke-linecap="round" opacity="0.58"/>
+  </g>
+
+  <g>
+    <path d="M315 238H417L331 679H229Z" fill="#000000" opacity="0.34"/>
+    <path d="M451 238H553L467 679H365Z" fill="#000000" opacity="0.28"/>
+    <path d="M587 238H689L603 679H501Z" fill="#000000" opacity="0.22"/>
+    <path d="M303 224H405L319 665H217Z" fill="url(#amber)"/>
+    <path d="M439 224H541L455 665H353Z" fill="url(#amber)" opacity="0.76"/>
+    <path d="M575 224H677L591 665H489Z" fill="url(#amber)" opacity="0.42"/>
+  </g>
+
+  <path d="M246 762H374L421 704H523L572 784H681L729 722H794" fill="none" stroke="#66d9e8" stroke-width="48" stroke-linecap="round" stroke-linejoin="round" opacity="0.13"/>
+  <g fill="none" stroke="url(#cyan)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M246 762H374L421 704H523L572 784H681L729 722H794"/>
+  </g>
+  <g fill="#b8f5fb" stroke="#0b1217" stroke-width="10">
+    <circle cx="246" cy="762" r="20"/><circle cx="421" cy="704" r="20"/>
+    <circle cx="572" cy="784" r="20"/><circle cx="729" cy="722" r="20"/><circle cx="794" cy="722" r="20"/>
+  </g>
+
+  <rect x="56" y="56" width="912" height="912" rx="210" fill="none" stroke="#314650" stroke-width="10"/>
+  <path d="M197 157C323 78 701 78 827 157" fill="none" stroke="#ffffff" stroke-width="12" stroke-linecap="round" opacity="0.08"/>
+</svg>

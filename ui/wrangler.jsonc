@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "open-ecu-studio",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-11-26",
+  "assets": {
+    "directory": "../ecu_lab/ui_dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "durable_objects": {
+    "bindings": [
+      {"name": "LAB_SESSIONS", "class_name": "LabSession"}
+    ]
+  },
+  "migrations": [
+    {"tag": "v1", "new_sqlite_classes": ["LabSession"]}
+  ],
+  "routes": [
+    {"pattern": "ecu-studio.anir0y.in", "custom_domain": true}
+  ]
+}
