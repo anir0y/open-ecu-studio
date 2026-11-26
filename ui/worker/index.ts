@@ -17,7 +17,7 @@ function securityHeaders(response: Response): Response {
   next.headers.set("X-Content-Type-Options", "nosniff");
   next.headers.set("X-Frame-Options", "DENY");
   next.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-  next.headers.set("Content-Security-Policy", "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; connect-src 'self' wss:; font-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; worker-src 'self' blob:");
+  next.headers.set("Content-Security-Policy", "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; connect-src 'self' wss:; font-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:");
   return next;
 }
 
