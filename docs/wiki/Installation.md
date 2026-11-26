@@ -32,7 +32,11 @@ pnpm --dir ui test:worker
 pnpm --dir ui worker:deploy
 ```
 
-The custom hostname is declared in `ui/wrangler.jsonc`. No D1 database or deployment secret is required. The hosted version deliberately disables STM32 firmware rehosting; use the local browser or desktop setup for Unicorn or Renode experiments.
+The custom hostname is declared in `ui/wrangler.jsonc`. The direct `workers.dev` hostname and preview URLs are disabled, and the Worker applies separate limits to simulation polling and control actions. No D1 database or Worker secret is required. The hosted version deliberately disables STM32 firmware rehosting; use the local browser or desktop setup for Unicorn or Renode experiments.
+
+Protect the custom hostname with Cloudflare Access before advertising it publicly. In Google Cloud, create an OAuth consent screen with an **External** audience and a **Web application** OAuth client. Use the Cloudflare Access team domain as the authorized JavaScript origin and `<team-domain>/cdn-cgi/access/callback` as the redirect URI. In Cloudflare Zero Trust, add the plain **Google** identity provider, store the client ID and secret there, and test it. Then create a self-hosted Access application for `ecu-studio.anir0y.in` with an Allow policy whose Include rule is the Google login method. Do not use a Bypass policy, an email-domain selector or the Google Workspace provider: this classroom is intended to accept any Google account. Add no OAuth credential to this repository or to `wrangler.jsonc`.
+
+After saving the policy, verify in a private browser window that the hostname redirects to Google, a personal Gmail account can open the lab, the account appears in the app header, and **Sign out** returns to the Access login screen. Also confirm that the disabled `workers.dev` hostname cannot bypass Access.
 
 ### STM32 reference image
 

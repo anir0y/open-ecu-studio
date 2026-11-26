@@ -3,6 +3,8 @@
   "name": "open-ecu-studio",
   "main": "worker/index.ts",
   "compatibility_date": "2026-11-26",
+  "workers_dev": false,
+  "preview_urls": false,
   "assets": {
     "directory": "../ecu_lab/ui_dist",
     "binding": "ASSETS",
@@ -14,6 +16,18 @@
       {"name": "LAB_SESSIONS", "class_name": "LabSession"}
     ]
   },
+  "ratelimits": [
+    {
+      "name": "ACTION_RATE_LIMITER",
+      "namespace_id": "4001001",
+      "simple": {"limit": 180, "period": 60}
+    },
+    {
+      "name": "TICK_RATE_LIMITER",
+      "namespace_id": "4001002",
+      "simple": {"limit": 420, "period": 60}
+    }
+  ],
   "migrations": [
     {"tag": "v1", "new_sqlite_classes": ["LabSession"]}
   ],

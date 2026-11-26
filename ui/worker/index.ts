@@ -1,8 +1,14 @@
-import {LabSimulation} from "./lab";
+import {LabSimulation} from "./lab.ts";
 
 type Env = {
   ASSETS: {fetch(request: Request): Promise<Response>};
   LAB_SESSIONS: {idFromName(name: string): unknown; get(id: unknown): {fetch(request: Request): Promise<Response>}};
+  ACTION_RATE_LIMITER: RateLimit;
+  TICK_RATE_LIMITER: RateLimit;
+};
+
+type RateLimit = {
+  limit(options: {key: string}): Promise<{success: boolean}>;
 };
 
 function sessionId(request: Request): string | undefined {
@@ -21,9 +27,36 @@ function securityHeaders(response: Response): Response {
   return next;
 }
 
+function authenticatedEmail(request: Request): string | undefined {
+  const email = request.headers.get("Cf-Access-Authenticated-User-Email")?.trim().toLowerCase();
+  return email && email.length <= 254 ? email : undefined;
+}
+
+function rateLimitKey(request: Request): string {
+  const identity = authenticatedEmail(request);
+  if (identity) return `google:${identity}`;
+  return `ip:${request.headers.get("CF-Connecting-IP") ?? "local"}`;
+}
+
+async function withinRateLimit(request: Request, env: Env, pathname: string): Promise<boolean> {
+  const limiter = pathname === "/api/tick" ? env.TICK_RATE_LIMITER : env.ACTION_RATE_LIMITER;
+  return (await limiter.limit({key: rateLimitKey(request)})).success;
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+    if (url.pathname === "/api/auth") {
+      const email = authenticatedEmail(request);
+      return json({
+        authenticated: Boolean(email),
+        email,
+        logout_url: "/cdn-cgi/access/logout",
+      });
+    }
+    if (url.pathname.startsWith("/api/") && !(await withinRateLimit(request, env, url.pathname))) {
+      return json({detail: "Request limit reached. Wait a minute and try again."}, 429, {"Retry-After": "60"});
+    }
     let session = sessionId(request);
     session ??= crypto.randomUUID();
     if (url.pathname.startsWith("/api/") || url.pathname === "/ws") {
@@ -67,6 +100,6 @@ export class LabSession {
   }
 }
 
-function json(value: unknown, status = 200): Response {
-  return Response.json(value, {status, headers: {"Cache-Control": "no-store"}});
+function json(value: unknown, status = 200, headers: Record<string, string> = {}): Response {
+  return Response.json(value, {status, headers: {"Cache-Control": "no-store", ...headers}});
 }

@@ -115,6 +115,10 @@ main { width: min(1680px, 100%); margin: 0 auto; padding: 18px 22px 30px; }
 .studio-header nav a { white-space: nowrap; padding-inline: clamp(7px, 1vw, 16px); }
 .studio-tools, .window-actions { display: flex; align-items: center; gap: 8px; }
 .studio-tools { justify-self: end; gap: 14px; }
+.account-state { display: grid; justify-items: end; gap: 2px; min-width: 0; font-size: 9px; }
+.account-state span { max-width: 170px; overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
+.account-state a { color: var(--cyan); font-size: 9px; text-decoration: none; }
+.account-state a:hover { text-decoration: underline; }
 .studio-tools button {
   padding: 7px 10px;
   border: 1px solid #3b5963;
@@ -153,6 +157,7 @@ main { width: min(1680px, 100%); margin: 0 auto; padding: 18px 22px 30px; }
 }
 @media (max-width: 530px) {
   .studio-tools .link-state { display: none; }
+  .account-state span { display: none; }
   .studio-header { padding-inline: 8px; gap: 0 4px; }
   .studio-tools button { padding-inline: 6px; }
   .studio-identity { gap: 6px; }

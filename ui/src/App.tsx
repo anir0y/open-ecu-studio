@@ -86,6 +86,12 @@ type Status = {
 
 type WsPayload = { frames: Frame[]; status: Status };
 
+type AuthInfo = {
+  authenticated: boolean;
+  email?: string;
+  logout_url: string;
+};
+
 const workspaceLinks = [
   ["drive-lab", "Drive lab"], ["esc-event", "Freeze ESC event"], ["body-controls", "Body controls"],
   ["signals", "Signals"], ["diagnostics", "Diagnostics"], ["dbc-workspace", "DBC workbench"], ["packet-lesson", "Packet classroom"], ["author", "Author"],
@@ -247,6 +253,7 @@ export default function App() {
     setInputs(value);
   };
   const [connected, setConnected] = useState(false);
+  const [auth, setAuth] = useState<AuthInfo>();
   const [busy, setBusy] = useState(false);
   const [signalPending, setSignalPending] = useState(false);
   const [error, setError] = useState("");
@@ -290,6 +297,7 @@ export default function App() {
         connect();
         return;
       }
+      api<AuthInfo>("/api/auth").then(setAuth).catch(() => undefined);
       setConnected(true);
       cloudTimer = window.setInterval(async () => {
         if (cloudPending) return;
@@ -480,6 +488,7 @@ export default function App() {
           className={section === id ? "active" : undefined} aria-current={section === id ? "location" : undefined}>{label}</a>)}</nav>
         <div className="studio-tools">
           <div className="link-state"><i className={connected ? "connected" : ""} /><span>{connected ? "Lab connected" : "Reconnecting"}</span>{desktopVersion && <small>Desktop {desktopVersion}</small>}</div>
+          {auth?.authenticated && <div className="account-state"><span title={auth.email}>{auth.email}</span><a href={auth.logout_url}>Sign out</a></div>}
           {controls.detached ? <div className="window-actions">
             <button onClick={() => controls.focus()}>Show controls</button>
             <button onClick={controls.dock}>Dock controls</button>

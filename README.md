@@ -47,7 +47,7 @@ The dynamics model emits classical CAN and a 16-byte CAN FD telemetry frame. In 
 
 The DBC workbench imports a deliberately bounded teaching subset and includes a visual builder for placing signals onto payload bytes without writing DBC syntax. It supports standard 11-bit identifiers, 1–8 byte Classical CAN messages, and byte-aligned 8–32 bit integer signals with Intel or Motorola byte order. Imported definitions and packet previews stay in the browser; this feature does not open or transmit through a CAN adapter.
 
-The Cloudflare deployment uses a Worker and one Durable Object per browser profile for the synthetic classroom. It supports the dynamics model, controls, diagnostics, worksheets and packet tools. STM32/Unicorn firmware rehosting remains available in the desktop and local browser setups because native firmware emulation cannot run inside a standard Cloudflare Worker.
+The Cloudflare deployment uses a Worker and one Durable Object per browser profile for the synthetic classroom. It supports the dynamics model, controls, diagnostics, worksheets and packet tools. The public hostname is designed to sit behind Cloudflare Access with the Google identity provider, allowing any Google account while keeping the direct `workers.dev` hostname disabled. Worker-side rate limits provide a second abuse control. STM32/Unicorn firmware rehosting remains available in the desktop and local browser setups because native firmware emulation cannot run inside a standard Cloudflare Worker.
 
 | Synthetic ID | What students can observe |
 | --- | --- |
