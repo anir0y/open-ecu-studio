@@ -1,0 +1,29 @@
+.esc-event { margin-top: 14px; padding: clamp(16px, 2vw, 26px); background: #0d1419; border: 1px solid var(--line); scroll-margin-top: 84px; }
+.esc-event-header, .esc-event-controls { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 10px; }
+.esc-event-header { justify-content: space-between; gap: 12px 20px; }
+.esc-event-header > div:first-child { flex: 1 1 320px; }
+.esc-event h2, .esc-event h3 { margin: 0; font: 500 27px "Barlow Condensed", sans-serif; }
+.esc-event p { margin: 5px 0 0; font-size: 14px; line-height: 1.5; color: #b3c2cb; }
+.esc-event-controls { gap: 6px; }
+.esc-event-controls button { padding: 8px 12px; min-height: 38px; border: 1px solid #42545f; background: #162129; cursor: pointer; }
+.esc-event-controls button.esc-main-action { color: #151b1d; background: #edc16b; border-color: #edc16b; }
+.esc-event-controls button:disabled { opacity: .45; cursor: default; }
+.esc-remote-heading h2 { margin: 0; font: 500 23px "Barlow Condensed", sans-serif; }
+.esc-remote-heading p { margin: 6px 0 10px; color: #b3c2cb; font-size: 13px; line-height: 1.5; }
+.esc-remote-heading p[role=alert] { color: #ffc5a9; }
+.esc-event .esc-event-origin { margin-top: 16px; color: #ecc780; font-size: 13px; }
+.esc-event-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+.esc-event-card { display: flex; flex-direction: column; min-width: 0; padding: clamp(12px, 1.3vw, 18px); border: 1px solid var(--line); background: #131d24; }
+.esc-event h3 { font-size: 23px; }
+.esc-event h3 code { display: block; font: 14px ui-monospace, monospace; color: var(--cyan); margin-bottom: 5px; }
+.esc-event dl { margin: 12px 0; }
+.esc-event dl div { display: flex; justify-content: space-between; gap: 8px; margin: 3px 0; }
+.esc-event dt { color: #b3c2cb; font-size: 14px; }
+.esc-event dd { margin: 0; font-size: 15px; font-variant-numeric: tabular-nums; }
+.esc-event .esc-event-hex { display: block; margin-top: auto; padding: 8px 0 0; border-top: 1px solid var(--line); font: 14px/1.5 ui-monospace, monospace; }
+.esc-event .esc-event-meta, .esc-event-baseline { font-size: 13px; }
+.esc-event-baseline { margin-top: 14px; }
+.esc-event-baseline summary { cursor: pointer; color: var(--ice); }
+.esc-event-baseline div { margin-top: 8px; }
+.esc-event p[role=alert] { color: #ffc5a9; }
+@media (max-width: 720px) { .esc-event-cards { grid-template-columns: 1fr; } }

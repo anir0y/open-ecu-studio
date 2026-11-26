@@ -1,0 +1,67 @@
+body.controls-window {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+  color: var(--ice);
+  background: #0d1419;
+}
+.controls-window-header {
+  flex: none;
+  padding: 15px 16px 0;
+  border-bottom: 1px solid var(--line);
+  background: #101a20;
+}
+.controls-window-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 9px;
+}
+.controls-window-title h1 {
+  margin: 0;
+  font: 500 28px/1.15 "Barlow Condensed", sans-serif;
+}
+.controls-window-title button {
+  padding: 6px 11px;
+  border: 1px solid #52636d;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--ice);
+  font-size: 13px;
+  cursor: pointer;
+}
+.controls-window-title button:hover { border-color: var(--cyan); }
+.controls-window-tabs { display: grid; grid-template-columns: repeat(4, 1fr); }
+.controls-window-tabs button {
+  min-height: 39px;
+  padding: 5px 2px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: none;
+  color: #aebdc5;
+  font-size: 14px;
+  cursor: pointer;
+}
+.controls-window-tabs button[aria-selected="true"] { color: var(--cyan); border-bottom-color: currentColor; }
+.controls-window-tabs button:focus-visible { outline-offset: -4px; }
+.controls-window-panel {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-color: #475963 #0d1419;
+  overscroll-behavior: contain;
+}
+.controls-window-panel[hidden] { display: none; }
+.controls-window-panel:not(#panel-drive) { padding: 16px; }
+.controls-window-panel:focus-visible { outline: 2px solid var(--cyan); outline-offset: -2px; }
+.controls-window-panel .drive-deck { padding: 16px; }
+.controls-window .source-picker strong, .controls-window .range-control > span,
+.controls-window .preset-grid button { font-size: 13px; }
+.controls-window .source-picker small, .controls-window .keyboard-guide,
+.controls-window .keyboard-guide kbd { font-size: 11px; }
+.controls-window .range-control { gap: 3px; }
+body.controls-window .range-control input { height: 20px; background-size: 100% 3px; background-position: center; background-repeat: no-repeat; }

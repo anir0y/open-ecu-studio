@@ -1,0 +1,64 @@
+{
+  "name": "open-ecu-research-console",
+  "private": true,
+  "version": "0.4.1",
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit && vite build",
+    "check": "tsc --noEmit",
+    "test:motion": "node --experimental-strip-types --test tests/motion.test.ts",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "electron:compile": "tsc -p electron/tsconfig.json",
+    "desktop:prepare": "pnpm build && pnpm electron:compile",
+    "desktop:dev": "pnpm desktop:prepare && electron electron-dist/main.cjs",
+    "desktop:package": "pnpm desktop:prepare && ../scripts/build_desktop_backend.sh && electron-builder --mac dir --arm64"
+  },
+  "main": "electron-dist/main.cjs",
+  "dependencies": {
+    "@fontsource-variable/ibm-plex-sans": "5.3.0",
+    "@fontsource/barlow-condensed": "5.3.0",
+    "@react-three/drei": "10.7.9",
+    "@react-three/fiber": "9.8.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "three": "0.187.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@types/three": "^0.181.0",
+    "@vitejs/plugin-react": "6.3.0",
+    "electron": "45.5.0",
+    "electron-builder": "26.18.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.8"
+  },
+  "build": {
+    "appId": "dev.openecu.researchconsole",
+    "productName": "Open ECU Studio",
+    "asar": true,
+    "directories": {
+      "output": "../outputs/desktop"
+    },
+    "files": [
+      "electron-dist/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../dist/open-ecu-backend",
+        "to": "backend/open-ecu-backend"
+      },
+      {
+        "from": "licenses",
+        "to": "licenses"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": ["dir"],
+      "artifactName": "Open-ECU-Studio-${version}-${arch}.${ext}"
+    }
+  }
+}

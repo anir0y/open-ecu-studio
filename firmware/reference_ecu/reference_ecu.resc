@@ -1,0 +1,19 @@
+:name: Open reference ECU on STM32F407
+:description: Runs synthetic ESC telemetry and safe UDS services over a Linux vcan bridge
+
+using sysbus
+
+$bin ?= @build/reference_ecu.elf
+$canInterface ?= "vcan0"
+
+mach create "open-reference-ecu"
+machine LoadPlatformDescription @platforms/boards/stm32f4_discovery.repl
+sysbus LoadELF $bin
+
+emulation CreateCANHub "canHub"
+connector Connect sysbus.can1 canHub
+machine CreateSocketCANBridge "socketcan" $canInterface
+connector Connect socketcan canHub
+
+start
+
